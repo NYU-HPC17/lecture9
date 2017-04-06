@@ -5,7 +5,9 @@
  */
 #include <stdio.h>
 #include <math.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <mpi.h>
 #include "util.h"
 #include <string.h>
@@ -16,6 +18,7 @@ double compute_residual(double *lu, int lN, double invhsq)
   int i;
   double tmp, gres = 0.0, lres = 0.0;
 
+#pragma omp parallel for default(none) shared(lu,lN,invhsq) private(i,tmp) reduction(+:lres)
   for (i = 1; i <= lN; i++){
     tmp = ((2.0*lu[i] - lu[i-1] - lu[i+1]) * invhsq - 1);
     lres += tmp * tmp;
@@ -43,7 +46,17 @@ int main(int argc, char * argv[])
 
   sscanf(argv[1], "%d", &N);
   sscanf(argv[2], "%d", &max_iters);
-
+# pragma omp parallel
+  {
+#ifdef _OPENMP
+    int my_threadnum = omp_get_thread_num();
+    int numthreads = omp_get_num_threads();
+#else
+    int my_threadnum = 0;
+    int numthreads = 1;
+#endif
+    printf("Hello, I'm thread %d out of %d on mpirank %d\n", my_threadnum, numthreads, mpirank);
+  }
   /* compute number of unknowns handled by each process */
   lN = N / p;
   if ((N % p != 0) && mpirank == 0 ) {
@@ -72,6 +85,7 @@ int main(int argc, char * argv[])
 
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
 
+#pragma omp parallel for default(none) shared(lN,lunew,lu,hsq)
     /* Jacobi step for local points */
     for (i = 1; i <= lN; i++){
       lunew[i]  = 0.5 * (hsq + lu[i - 1] + lu[i + 1]);

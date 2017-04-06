@@ -1,5 +1,5 @@
 EXECS=jacobi-mpi-hybrid
-FLAGS=-O3 -fopenmp -Wall
+FLAGS=-O3 -fopenmp -Wall -lm -g
 MPICC=mpicc
 
 all: ${EXECS}
