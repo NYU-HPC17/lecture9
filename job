@@ -1,0 +1,23 @@
+#!/bin/bash
+#----------------------------------------------------
+# Example SLURM job script to run hybrid applications
+# (MPI/OpenMP or MPI/pthreads) on TACC's Stampede
+# system.
+#----------------------------------------------------
+#SBATCH -J hybrid           # Job name
+#SBATCH -o hybrid.o%j       # Name of stdout output file(%j expands to jobId)
+#SBATCH -e hybrid.o%j       # Name of stderr output file(%j expands to jobId)
+#SBATCH -p development      # Submit to the 'normal' or 'development' queue
+#SBATCH -N 1                # Total number of nodes requested (16 cores/node)
+#SBATCH -n 1                # Total number of mpi tasks requested
+#SBATCH -t 01:30:00         # Run time (hh:mm:ss) - 1.5 hours
+# The next line is required if the user has more than one project
+# #SBATCH -A A-yourproject  # Allocation name to charge job against
+
+# This example will run a hybrid application using 16 threads
+
+# Set the number of threads per task(Default=1)
+export OMP_NUM_THREADS=16
+
+# Run the hybrid application
+ibrun ./my_hybrid.exe
